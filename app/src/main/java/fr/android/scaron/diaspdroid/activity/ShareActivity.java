@@ -5,11 +5,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,36 +18,35 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
+import com.koushikdutta.async.http.Headers;
+import com.koushikdutta.ion.HeadersResponse;
 import com.koushikdutta.ion.Response;
 
 import org.acra.ACRA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.List;
-
 import fr.android.scaron.diaspdroid.R;
-import fr.android.scaron.diaspdroid.controler.LogControler;
 import fr.android.scaron.diaspdroid.controler.DiasporaControler;
-import fr.android.scaron.diaspdroid.model.Image;
+import fr.android.scaron.diaspdroid.controler.LogControler;
+import fr.android.scaron.diaspdroid.model.DiasporaConfig;
 import fr.android.scaron.diaspdroid.model.UploadResult;
 
+//@EActivity(R.layout.activity_share)
 public class ShareActivity extends ActionBarActivity {
 
     private static Logger LOGGEUR = LoggerFactory.getLogger(ShareActivity.class);
-    private static LogControler LOG = LogControler.getInstance(LOGGEUR);
+    private static LogControler LOG = LogControler.getLoggeur(LOGGEUR);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try{
             super.onCreate(savedInstanceState);
+            DiasporaConfig.init(this.getApplication(), this);
             // Get intent, action and MIME type
             Intent intent = getIntent();
             String action = intent.getAction();
             String type = intent.getType();
-            Ion.getDefault(this).configure().setLogging("diaspdroid.ion", Log.VERBOSE);
             restoreActionBar();
             if (Intent.ACTION_SEND.equals(action) && type != null) {
 //                if ("text/plain".equals(type)) {
@@ -70,11 +67,13 @@ public class ShareActivity extends ActionBarActivity {
                     shareText.setText("Partage de la photo en cours: " + imageName + " ("+imageLocalPath+")");
 
                     //Callback de la récupération du flux
-                    final FutureCallback<Response<UploadResult>> shareCallback = new FutureCallback<Response<UploadResult>>() {
+
+                    //Callback de la récupération du flux
+                    final FutureCallback<Response<String>> shareCallbackString = new FutureCallback<Response<String>>() {
                         @Override
-                        public void onCompleted(Exception e, Response<UploadResult> responseUploadResult) {
+                        public void onCompleted(Exception e, Response<String> responseUploadResult) {
                             LOG.d(ShareActivity.class, "shareCallback, exception ? " + e);
-                            UploadResult uploadResult = responseUploadResult.getResult();
+                            String uploadResult = responseUploadResult.getResult();
                             if (e!=null && e.getCause()!=null) {
                                 final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ShareActivity.this);
                                 final AlertDialog alertDialog = alertDialogBuilder.create();
@@ -84,14 +83,71 @@ public class ShareActivity extends ActionBarActivity {
                                 alertDialog.show();
                                 shareText.setText("Le partage de la photo a échouéé");
                                 LOG.d(ShareActivity.class , "shareCallback, cause exception ? " + e.getCause().getMessage());
-                                LOG.e("Callback flux, Erreur : " + e.getMessage());
+                                LOG.e("Callback flux, Erreur : " + e.getMessage(), e);
                                 if (e.getCause()!=null) {
                                     LOG.e("shareCallback, cause exception ? " + e.getCause().getMessage());
                                 }
                             }
                             LOG.d(ShareActivity.class, "shareCallback, request body : " + responseUploadResult.getRequest().getBody());
-                            LOG.d(ShareActivity.class, "shareCallback, response body : "+uploadResult.toString());
                             if (uploadResult!=null){
+                                LOG.d(ShareActivity.class, "shareCallback, response body : "+uploadResult.toString());
+                            }
+                            shareText.setText("Le partage de la photo a échouéé");
+//                            ACRA.getErrorReporter().handleException(e);
+                            uploadProgressBar.setVisibility(View.GONE);
+                        }
+                    };
+
+
+                    final FutureCallback<Response<UploadResult>> shareCallback = new FutureCallback<Response<UploadResult>>() {
+                        @Override
+                        public void onCompleted(Exception e, Response<UploadResult> responseUploadResult) {
+                            LOG.d(ShareActivity.class, "shareCallback, exception ? " + e);
+                            UploadResult uploadResult = responseUploadResult.getResult();
+                            if (e!=null) {
+                                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ShareActivity.this);
+                                final AlertDialog alertDialog = alertDialogBuilder.create();
+                                alertDialog.setIcon(R.drawable.ic_launcher);
+                                alertDialog.setTitle("PB de partage");
+                                alertDialog.setMessage("Votre publication a échouée\n("+ e.getMessage()+")");
+                                alertDialog.show();
+                                shareText.setText("Le partage de la photo a échouéé");
+                                LOG.e("Callback flux, Erreur : " + e.getMessage(),e);
+                                if (e.getCause()!=null){
+                                    LOG.e("shareCallback, cause exception ? " + e.getCause().getMessage());
+                                }
+                            }
+                            LOG.d(ShareActivity.class, "shareCallback, request body : " + responseUploadResult.getRequest().getBody());
+
+                            HeadersResponse responseHeaders = responseUploadResult.getHeaders();
+                            LOG.d(ShareActivity.class, "shareCallback, response headers ? : " + responseHeaders);
+                            if (responseHeaders!=null){
+                                int headerCode = responseHeaders.code();
+                                String headerMessage = responseHeaders.message();
+                                LOG.d(ShareActivity.class, "shareCallback, response headers code : " + headerCode);
+                                LOG.d(ShareActivity.class, "shareCallback, response headers message : " + headerMessage);
+
+                                Headers headers = responseHeaders.getHeaders();
+                                LOG.d(ShareActivity.class, "shareCallback, headers ? : " + headers);
+                                if (headers!=null) {
+                                    LOG.d(ShareActivity.class, "shareCallback, headers values : " +headers.toHeaderArray());
+                                }
+                            }
+
+                            LOG.d(ShareActivity.class, "shareCallback, response body ? : "+uploadResult);
+                            if (uploadResult!=null){
+                                LOG.d(ShareActivity.class, "shareCallback, response body : "+uploadResult.toString());
+                                if (uploadResult.getError()!=null){
+                                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ShareActivity.this);
+                                    final AlertDialog alertDialog = alertDialogBuilder.create();
+                                    alertDialog.setIcon(R.drawable.ic_launcher);
+                                    alertDialog.setTitle("Echec de publication");
+                                    alertDialog.setMessage("Votre publication a échouée\n(Erreur obtenue : "+uploadResult.getError()+")");
+                                    alertDialog.show();
+                                    uploadProgressBar.setVisibility(View.GONE);
+                                    shareText.setText("Le partage de la photo a échouéé");
+                                    return;
+                                }
                                 if (uploadResult.getData()!=null && uploadResult.getData().getPhoto()!=null){
                                     String urlSharedImg = null;
                                     if (uploadResult.getData().getPhoto().getUnprocessed_image()!=null){
@@ -124,7 +180,7 @@ public class ShareActivity extends ActionBarActivity {
                                 }
                             }
                             shareText.setText("Le partage de la photo a échouéé");
-                            ACRA.getErrorReporter().handleException(e);
+//                            ACRA.getErrorReporter().handleException(e);
                             uploadProgressBar.setVisibility(View.GONE);
                         }
                     };
@@ -135,13 +191,14 @@ public class ShareActivity extends ActionBarActivity {
                             uploadProgressBar.setVisibility(View.VISIBLE);
 
                             // Execute some code after 2 seconds have passed
-                            Handler handler = new Handler();
-                            handler.postDelayed(new Runnable() {
-                                public void run() {
+//                            Handler handler = new Handler();
+//                            handler.postDelayed(new Runnable() {
+//                                public void run() {
                                     shareText.setText("Partage en cours de la photo : " + imageName + " (" + imageLocalPath + ")-----------\nAvec le message : " + shareText.getText());
-                                    DiasporaControler.partagerImage(ShareActivity.this, imageLocalPath, imageName, shareText.getText().toString(), uploadProgressBar, shareCallback);
-                                }
-                            }, 2000);
+                                    DiasporaControler.partagerImage(imageLocalPath, imageName, shareText.getText().toString(), uploadProgressBar, shareCallback);
+//                                    DiasporaControler.partagerImage(ShareActivity.this, imageLocalPath, imageName, uploadProgressBar, shareCallbackString);
+//                                }
+//                            }, 2000);
                         }
                     };
                     shareButton.setOnClickListener(myhandler);

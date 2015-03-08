@@ -15,22 +15,30 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.android.scaron.diaspdroid.model.DiasporaConfig;
+
 /**
- * Created by CARON-08651 on 26/01/2015.
+ * Created by Sébastien on 26/01/2015.
  */
 public class CookieControler {
 
     private static Logger LOGGEUR = LoggerFactory.getLogger(CookieControler.class);
-    private static LogControler LOG = LogControler.getInstance(LOGGEUR);
+    private static LogControler LOG = LogControler.getLoggeur(LOGGEUR);
 
     static CookieControler instance;
     CookieManager manager;
     CookieMiddleware middleware;
 
-    public static CookieControler getInstance(Context context) {
-        if (instance==null){
-            instance = new CookieControler(context);
+
+    public static void init(){
+        if (instance == null){
+            instance = new CookieControler(DiasporaConfig.APPLICATION_CONTEXT);
         }
+    }
+
+    public static CookieControler getInstance() {
+        init();
         return instance;
     }
     private CookieControler(Context context) {

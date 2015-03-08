@@ -26,7 +26,7 @@ import java.util.Map;
 public class YoutubeControler {
 
     private static Logger LOGGEUR = LoggerFactory.getLogger(YoutubeControler.class);
-    private static LogControler LOG = LogControler.getInstance(LOGGEUR);
+    private static LogControler LOG = LogControler.getLoggeur(LOGGEUR);
 
     public static Map<String,String> rtspMapping = new Hashtable<String, String>();
 
@@ -109,7 +109,7 @@ public class YoutubeControler {
                             videoView.setVideoURI(video);
 
                         } catch (Exception exception) {
-                            LOG.e(".getView Error : "+e.getMessage());
+                            LOG.e(".getView Error : "+e.getMessage(), e);
                             exception.printStackTrace();
                         }
 
@@ -232,7 +232,7 @@ public class YoutubeControler {
 //            }
 //            return cursor;
         } catch (Exception ex) {
-            LOG.e("Get Url Video RTSP Exception======>>" + ex.toString());
+            LOG.e("Get Url Video RTSP Exception======>>" + ex.toString(), ex);
         }
         return urlYoutube;
 

@@ -2,11 +2,12 @@ package fr.android.scaron.diaspdroid.controler;
 
 import android.util.Log;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by CARON-08651 on 26/01/2015.
+ * Created by Sébastien on 26/01/2015.
  */
 public class LogControler {
     private static LogControler Loggeur;
@@ -21,7 +22,7 @@ public class LogControler {
     }
 
 
-    public static LogControler getInstance(Logger log) {
+    public static LogControler getLoggeur(Logger log) {
         if (Loggeur==null){
             Loggeur= new LogControler(log);
         }
@@ -39,35 +40,44 @@ public class LogControler {
 
     public void i(Class classe, String message){
         log.info(message);
-        Log.i(classe.getName(), message);
+        Log.i("app:fr.android.scaron.diaspdroid ("+classe.getName()+")", message);
     }
     public void d(Class classe, String message){
         log.debug(message);
-        Log.d(classe.getName(), message);
+        Log.d("app:fr.android.scaron.diaspdroid ("+classe.getName()+")", message);
     }
     public void v(Class classe, String message){
         log.trace(message);
-        Log.v(classe.getName(), message);
+        Log.v("app:fr.android.scaron.diaspdroid ("+classe.getName()+")", message);
     }
     public void e(Class classe, String message){
         log.error(message);
-        Log.e(classe.getName(), message);
+        Log.e("app:fr.android.scaron.diaspdroid ("+classe.getName()+")", message);
     }
 
     public void i(String message){
         log.info(message);
-        Log.i(className, className+" : "+message);
+        Log.i("app:fr.android.scaron.diaspdroid ("+className+")", className+" : "+message);
     }
     public void d(String message){
         log.debug(message);
-        Log.d(className, className+" : "+message);
+        Log.d("app:fr.android.scaron.diaspdroid ("+className+")", className+" : "+message);
     }
     public void v(String message){
         log.trace(message);
-        Log.v(className, className+" : "+message);
+        Log.v("app:fr.android.scaron.diaspdroid ("+className+")", className+" : "+message);
     }
     public void e(String message){
         log.error(message);
-        Log.e(className, className+" : "+message);
+        Log.e("app:fr.android.scaron.diaspdroid ("+className+")", className+" : "+message);
     }
+
+
+    public void e(String message, Throwable exception){
+        String stack = ExceptionUtils.getStackTrace(exception);
+        log.error(message+"\n--- stack ---"+stack+"-------------");
+        Log.e("app:fr.android.scaron.diaspdroid ("+className+")", className+" : "+message);
+    }
+
+
 }

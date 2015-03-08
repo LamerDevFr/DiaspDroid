@@ -3,7 +3,6 @@
 <configuration>
     <property name="LOG_DIR" value="/sdcard/Android/data/fr.scaron.diaspdroid/logs" />
 
-
   <appender name="DiaspDroid" class="ch.qos.logback.core.FileAppender">
     <filter class="ch.qos.logback.classic.filter.LevelFilter">
       <level>DEBUG</level>
@@ -11,7 +10,7 @@
       <onMismatch>ACCEPT</onMismatch>
     </filter>
 
-	  <file>${LOG_DIR}/diaspdroid.log</file>
+	  <file>${LOG_DIR}/mainapplication.log</file>
       <includeCallerData>true</includeCallerData>
 
     <encoder>
@@ -23,6 +22,10 @@
   <logger name="fr.android.scaron.diaspdroid" level="DEBUG" additivity="false">
     <appender-ref ref="DiaspDroid" />
   </logger>
+
+    <logger name="com.google.gson" level="TRACE" additivity="true">
+        <appender-ref ref="DiaspDroid" />
+    </logger>
 
   <!-- Write DEBUG (and higher-level) messages to logcat -->
   <root level="DEBUG">
